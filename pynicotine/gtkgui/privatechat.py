@@ -444,7 +444,7 @@ class PrivateChat:
 
         try:
             lines = int(config["logging"]["readprivatelines"])
-        except:
+        except Exception:
             lines = 15
 
         try:
@@ -454,7 +454,7 @@ class PrivateChat:
             s = d.split("\n")
             for l in s[- lines:-1]:
                 AppendLine(self.ChatScroll, l + "\n", self.tag_hilite, timestamp_format="", username=self.user, usertag=self.tag_hilite)
-        except IOError, e:
+        except IOError as e:
             pass
 
         gobject.idle_add(self.frame.ScrollBottom, self.ChatScroll.get_parent())
@@ -999,7 +999,7 @@ class PrivateChat:
         def _combilower(x):
             try:
                 return str.lower(x)
-            except:
+            except Exception:
                 return unicode.lower(x)
 
         clist = list(set(clist))

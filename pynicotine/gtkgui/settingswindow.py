@@ -42,8 +42,6 @@ if win32:
 else:
     import pwd
 
-dir_location = os.path.dirname(os.path.realpath(__file__))
-
 
 class buildFrame:
     """ This class build the individual frames from the settings window """
@@ -179,7 +177,7 @@ class ServerFrame(buildFrame):
             server = self.Server.get_text().split(":")
             server[1] = int(server[1])
             server = tuple(server)
-        except:
+        except Exception:
             server = None
 
         if str(self.Login.get_text()) == "None":
@@ -195,7 +193,7 @@ class ServerFrame(buildFrame):
             firstport = min(self.FirstPort.get_value_as_int(), self.LastPort.get_value_as_int())
             lastport = max(self.FirstPort.get_value_as_int(), self.LastPort.get_value_as_int())
             portrange = (firstport, lastport)
-        except:
+        except Exception:
             portrange = None
             popupWarning(
                 self.p.SettingsWindow,
@@ -541,7 +539,7 @@ class DownloadsFrame(buildFrame):
                 re.compile("("+dfilter+")")
                 outfilter += dfilter
                 proccessedfilters.append(dfilter)
-            except Exception, e:
+            except Exception as e:
                 failed[dfilter] = e
 
             if filter is not df[-1]:
@@ -552,7 +550,7 @@ class DownloadsFrame(buildFrame):
         try:
             re.compile(outfilter)
 
-        except Exception, e:
+        except Exception as e:
             failed[outfilter] = e
 
         if len(failed.keys()) >= 1:
@@ -1068,7 +1066,7 @@ class TransfersFrame(buildFrame):
 
         try:
             uploadallowed = self.UploadsAllowed.get_active()
-        except:
+        except Exception:
             uploadallowed = 0
 
         if not self.RemoteDownloads.get_active():
@@ -1336,7 +1334,7 @@ class IgnoreFrame(buildFrame):
             try:
                 if int(chars) > 255:
                     return
-            except:
+            except Exception:
                 return
 
         if ip not in self.ignored_ips:
@@ -1478,7 +1476,7 @@ class BanFrame(buildFrame):
             try:
                 if int(chars) > 255:
                     return
-            except:
+            except Exception:
                 return
 
         if ip not in self.blocked:
@@ -1877,7 +1875,7 @@ class ColoursFrame(buildFrame):
 
                     try:
                         colour = gtk.gdk.color_parse(config[key][option])
-                    except:
+                    except Exception:
                         colour = None
 
                     drawingarea.modify_bg(gtk.STATE_NORMAL, colour)
@@ -1961,7 +1959,7 @@ class ColoursFrame(buildFrame):
 
                 try:
                     colour = gtk.gdk.color_parse(defaults[key][option])
-                except:
+                except Exception:
                     colour = None
 
                 drawingarea.modify_bg(gtk.STATE_NORMAL, colour)
@@ -2016,7 +2014,7 @@ class ColoursFrame(buildFrame):
         if colour is not None and colour != '':
             try:
                 colour = gtk.gdk.color_parse(colour)
-            except:
+            except Exception:
                 dlg.destroy()
                 return
             else:
@@ -2386,7 +2384,7 @@ class SearchFrame(buildFrame):
     def SetSettings(self, config):
         try:
             searches = config["searches"]
-        except:
+        except Exception:
             searches = None
         self.p.SetWidgetsData(config, self.options)
 
@@ -2455,7 +2453,7 @@ class AwayFrame(buildFrame):
     def GetSettings(self):
         try:
             autoaway = self.AutoAway.get_value_as_int()
-        except:
+        except Exception:
             autoaway = None
         return {
             "server": {
@@ -2645,7 +2643,7 @@ class UrlCatchFrame(buildFrame):
                 handler = self.protocolmodel.get_value(iter, 1)
                 protocols[protocol] = handler
                 iter = self.protocolmodel.iter_next(iter)
-        except:
+        except Exception:
             pass
 
         return {
@@ -2786,7 +2784,7 @@ class CensorFrame(buildFrame):
                 word = self.censorlist.get_value(iter, 0)
                 censored.append(word)
                 iter = self.censorlist.iter_next(iter)
-        except:
+        except Exception:
             pass
 
         return {
@@ -2893,7 +2891,7 @@ class AutoReplaceFrame(buildFrame):
                 replacement = self.replacelist.get_value(iter, 1)
                 autoreplaced[word] = replacement
                 iter = self.replacelist.iter_next(iter)
-        except:
+        except Exception:
             autoreplaced.clear()
 
         return {
@@ -3069,7 +3067,7 @@ class buildDialog(gtk.Dialog):
 
         try:
             self.settings.SetWidget(self.tw[name], value)
-        except:
+        except Exception:
             pass
 
         self.addButton = gtk.Button(_("Add"), gtk.STOCK_ADD)
@@ -3125,9 +3123,9 @@ class buildDialog(gtk.Dialog):
         for name, data in options.items():
             if plugin not in self.settings.frame.np.config.sections["plugins"] or name not in self.settings.frame.np.config.sections["plugins"][plugin]:
                 if plugin not in self.settings.frame.np.config.sections["plugins"]:
-                    print "No1 " + plugin + ", " + repr(self.settings.frame.np.config.sections["plugins"].keys())
+                    print("No1 " + plugin + ", " + repr(self.settings.frame.np.config.sections["plugins"].keys()))
                 elif name not in self.settings.frame.np.config.sections["plugins"][plugin]:
-                    print "No2 " + name + ", " + repr(self.settings.frame.np.config.sections["plugins"][plugin].keys())
+                    print("No2 " + name + ", " + repr(self.settings.frame.np.config.sections["plugins"][plugin].keys()))
                 continue
 
             # We currently support SpinButtons, TreeView (one per plugin) and Checkboxes.
@@ -3168,7 +3166,7 @@ class buildDialog(gtk.Dialog):
             elif data["type"] in ("list string",):
                 self.GenerateTreeView(name, data["description"], value, c)
             else:
-                print "Unknown setting type '%s', data '%s'" % (name, data)
+                print("Unknown setting type '%s', data '%s'" % (name, data))
 
             c += 1
 
@@ -3651,5 +3649,5 @@ class SettingsWindow:
                     config[key].update(data)
 
             return self.pages["Shares"].GetNeedRescan(), (self.pages["Colours"].needcolors or self.pages["Interface"].needcolors), self.pages["Completion"].needcompletion, config
-        except UserWarning, warning:
+        except UserWarning as warning:
             return None

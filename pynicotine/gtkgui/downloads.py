@@ -116,7 +116,8 @@ class Downloads(TransferList):
             columns.append(column.get_visible())
             widths.append(column.get_width())
         self.frame.np.config.sections["columns"]["downloads_columns"] = columns
-        self.frame.np.config.sections["columns"]["downloads_widths"] = widths 
+        self.frame.np.config.sections["columns"]["downloads_widths"] = widths
+
     def OnToggleAutoRetry(self, widget):
         self.frame.np.config.sections["transfers"]["autoretry_downloads"] = self.frame.ToggleAutoRetry.get_active()
 
@@ -189,7 +190,7 @@ class Downloads(TransferList):
                 try:
                     speed = str(int(transfer.speed))
                     speed += _(" KB/s")
-                except:
+                except Exception:
                     pass
                 bitratestr = str(transfer.bitrate)
                 length = str(transfer.length)
@@ -235,8 +236,8 @@ class Downloads(TransferList):
 
         complete_path = os.path.join(downloaddir, transfer.path)
 
-        if transfer.path is "":
-            if transfer.status is "Finished":
+        if transfer.path == "":
+            if transfer.status == "Finished":
                 executeCommand(filemanager, downloaddir)
             else:
                 executeCommand(filemanager, incompletedir)

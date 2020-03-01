@@ -189,9 +189,10 @@ class BuddiesComboBox:
 
 class NicotineFrame:
 
-    def __init__(self, config, plugindir, use_trayicon, start_hidden=False, bindip=None):
+    def __init__(self, data_dir, config, plugins, use_trayicon, start_hidden=False, bindip=None, port=None):
 
         self.clip_data = ""
+        self.data_dir = data_dir
         self.configfile = config
         self.transfermsgs = {}
         self.transfermsgspostedtime = 0
@@ -208,6 +209,7 @@ class NicotineFrame:
         self.SEXY = SEXY
         self.chatrooms = None
         self.bindip = bindip
+        self.port = port
         self.got_focus = False
 
         try:
@@ -220,7 +222,16 @@ class NicotineFrame:
         except ImportError:
             self.pynotify = None
 
-        self.np = NetworkEventProcessor(self, self.callback, self.logMessage, self.SetStatusText, self.bindip, config)
+        self.np = NetworkEventProcessor(
+          self,
+          self.callback,
+          self.logMessage,
+          self.SetStatusText,
+          self.bindip,
+          self.port,
+          data_dir,
+          config
+        )
 
         config = self.np.config.sections
 
@@ -381,32 +392,32 @@ class NicotineFrame:
             self.UserBrowseTabLabel,
             self.InterestsTabLabel
         ]:
-                # Initialize the image label
-                img_label = ImageLabel(translated_tablabels[label_tab], self.images["empty"])
-                img_label.show()
+            # Initialize the image label
+            img_label = ImageLabel(translated_tablabels[label_tab], self.images["empty"])
+            img_label.show()
 
-                # Add it to the eventbox
-                label_tab.add(img_label)
+            # Add it to the eventbox
+            label_tab.add(img_label)
 
-                # Set tab icons, angle and text color
-                label_tab.child.show_image(config["ui"]["tab_icons"])
-                label_tab.child.set_angle(config["ui"]["labelmain"])
-                label_tab.child.set_text_color(0)
+            # Set tab icons, angle and text color
+            label_tab.child.show_image(config["ui"]["tab_icons"])
+            label_tab.child.set_angle(config["ui"]["labelmain"])
+            label_tab.child.set_text_color(0)
 
-                # Set the menu to hide the tab
-                eventbox_name = gtk.Buildable.get_name(label_tab)
+            # Set the menu to hide the tab
+            eventbox_name = gtk.Buildable.get_name(label_tab)
 
-                label_tab.connect('button_press_event', self.on_tab_click, eventbox_name + "Menu", map_tablabels_to_box[label_tab])
+            label_tab.connect('button_press_event', self.on_tab_click, eventbox_name + "Menu", map_tablabels_to_box[label_tab])
 
-                self.__dict__[eventbox_name + "Menu"] = popup = utils.PopupMenu(self)
+            self.__dict__[eventbox_name + "Menu"] = popup = utils.PopupMenu(self)
 
-                popup.setup(
-                    (
-                        "#" + _("Hide %(tab)s") % {"tab": translated_tablabels[label_tab]}, self.HideTab, [label_tab, map_tablabels_to_box[label_tab]]
-                    )
+            popup.setup(
+                (
+                    "#" + _("Hide %(tab)s") % {"tab": translated_tablabels[label_tab]}, self.HideTab, [label_tab, map_tablabels_to_box[label_tab]]
                 )
+            )
 
-                popup.set_user(map_tablabels_to_box[label_tab])
+            popup.set_user(map_tablabels_to_box[label_tab])
 
         self.LogScrolledWindow = gtk.ScrolledWindow()
         self.LogScrolledWindow.set_shadow_type(gtk.SHADOW_IN)
@@ -566,7 +577,7 @@ class NicotineFrame:
 
         self.gstreamer = gstreamer()
 
-        self.pluginhandler = pluginsystem.PluginHandler(self, plugindir)
+        self.pluginhandler = pluginsystem.PluginHandler(self, plugins)
 
         self.ShowChatButtons.set_active(not config["ui"]["chat_hidebuttons"])
 
@@ -735,17 +746,17 @@ class NicotineFrame:
             self.pynotifyBox.set_icon_from_pixbuf(self.images["notify"])
             try:
                 n.attach_to_status_icon(self.TrayApp.trayicon)
-            except:
+            except Exception:
                 try:
                     n.attach_to_widget(self.TrayApp.trayicon)
-                except:
+                except Exception:
                     pass
         else:
             self.pynotifyBox.update(title, xmlmessage)
 
         try:
             self.pynotifyBox.show()
-        except gobject.GError, error:
+        except gobject.GError as error:
             self.logMessage(_("Notification Error: %s") % str(error))
 
     def LoadIcons(self):
@@ -1071,11 +1082,10 @@ class NicotineFrame:
         self.UserBrowseCombo.child.set_text("")
 
     def OnLoadFromDisk(self, widget):
-        configdir, config = os.path.split(self.np.config.filename)
-        sharesdir = os.path.abspath(configdir+os.sep+"usershares"+os.sep)
+        sharesdir = os.path.join(self.data_dir, "usershares")
         try:
             if not os.path.exists(sharesdir):
-                os.mkdir(sharesdir)
+                os.makedirs(sharesdir)
         except Exception, msg:
             log.addwarning(_("Can't create directory '%(folder)s', reported error: %(error)s") % {'folder': sharesdir, 'error': msg})
 
@@ -1095,7 +1105,7 @@ class NicotineFrame:
                 self.userbrowse.InitWindow(username, None)
                 if username in self.userbrowse.users:
                     self.userbrowse.users[username].LoadShares(mylist)
-            except Exception, msg:
+            except Exception as msg:
                 log.addwarning(_("Loading Shares from disk failed: %(error)s") % {'error': msg})
 
     def OnNowPlayingConfigure(self, widget):
@@ -1191,7 +1201,7 @@ class NicotineFrame:
                 return True
                 # Tell calling code that we have not handled this event pass it on.
             return False
-        except Exception, e:
+        except Exception as e:
             log.addwarning(_("button_press error, %(error)s") % {'error': e})
 
     def OnPageRemoved(self, MainNotebook, child, page_num):
@@ -1498,8 +1508,8 @@ class NicotineFrame:
                     AppendLine(self.LogWindow, msg, self.tag_log, scroll=True)
                     if self.np.config.sections["logging"]["logcollapsed"]:
                         self.SetStatusText(msg)
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    print(e)
         return False
 
     def ScrollBottom(self, widget):
@@ -1751,7 +1761,7 @@ class NicotineFrame:
                     loader.write(data, len(data))
                     loader.close()
                     img = loader.get_pixbuf()
-                except Exception, e:
+                except Exception as e:
                     log.addwarning(_("Error loading image for %(flag)s: %(error)s") % {'flag': flag, 'error': e})
                 self.flag_images[flag] = img
                 return img
@@ -2282,7 +2292,7 @@ class NicotineFrame:
         try:
             for tab in self.MainNotebook.get_children():
                 self.MainNotebook.set_tab_reorderable(tab, config["ui"]["tab_reorderable"])
-        except:
+        except Exception:
             # Old gtk
             pass
 
@@ -2475,7 +2485,7 @@ class NicotineFrame:
                 re.compile("("+dfilter+")")
                 outfilter += dfilter
                 proccessedfilters.append(dfilter)
-            except Exception, e:
+            except Exception as e:
                 failed[dfilter] = e
 
             proccessedfilters.append(dfilter)
@@ -2498,7 +2508,7 @@ class NicotineFrame:
                     errors += "Filter: %s Error: %s " % (filter, error)
                 error = _("Error: %(num)d Download filters failed! %(error)s " % {'num': len(failed.keys()), 'error': errors})
                 self.logMessage(error)
-        except Exception, e:
+        except Exception as e:
             # Strange that individual filters _and_ the composite filter both fail
             self.logMessage(_("Error: Download Filter failed! Verify your filters. Reason: %s" % e))
             self.np.config.sections["transfers"]["downloadregexp"] = ""
@@ -2727,13 +2737,13 @@ class NicotineFrame:
                 self.np.ProcessRequestToPeer(user, slskmessages.FolderContentsRequest(None, file[:-1].replace("/", "\\")))
             else:
                 self.np.transfers.getFile(user, file.replace("/", "\\"), "")
-        except:
+        except Exception:
             self.logMessage(_("Invalid SoulSeek meta-url: %s") % url)
 
     def SetClipboardURL(self, user, path):
         self.clip.set_text("slsk://" + urllib.pathname2url("%s/%s" % (user, path.replace("\\", "/"))))
         self.clip_data = "slsk://" + urllib.pathname2url("%s/%s" % (user, path.replace("\\", "/")))
-        self.MainWindow.selection_owner_set("PRIMARY", 0L)
+        self.MainWindow.selection_owner_set("PRIMARY", long(0))
 
     def OnSelectionGet(self, widget, data, info, timestamp):
         data.set_text(self.clip_data, -1)
@@ -2758,7 +2768,7 @@ class NicotineFrame:
                 else:
                     has_pic = False
                     pic = None
-            except:
+            except Exception:
                 pic = None
 
             descr = self.np.encode(eval(self.np.config.sections["userinfo"]["descr"], {}))
@@ -3698,14 +3708,14 @@ class gstreamer:
             import pygst
             pygst.require("0.10")
             import gst
-        except Exception, error:
+        except Exception as error:
             return
         self.gst = gst
         try:
             self.player = gst.element_factory_make("playbin", "player")
             fakesink = gst.element_factory_make('fakesink', "my-fakesink")
             self.player.set_property("video-sink", fakesink)
-        except Exception, error:
+        except Exception as error:
             log.addwarning(_("ERROR: Gstreamer-python could not play: %(error)s") % {'error': error})
             self.gst = self.player = None
             return
@@ -3728,8 +3738,8 @@ class gstreamer:
 
 class MainApp:
 
-    def __init__(self, config, plugindir, trayicon, start_hidden, bindip):
-        self.frame = NicotineFrame(config, plugindir, trayicon, start_hidden, bindip)
+    def __init__(self, data_dir, config, plugins, trayicon, start_hidden, bindip, port):
+        self.frame = NicotineFrame(data_dir, config, plugins, trayicon, start_hidden, bindip, port)
 
     def MainLoop(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)

@@ -75,7 +75,7 @@ class UserList:
         self.cols = cols = InitialiseColumns(
             self.UserList,
             [_("Status"), statusiconwidth, "pixbuf"],
-            [_("Country"), widths[1] , "pixbuf"],
+            [_("Country"), widths[1], "pixbuf"],
             [_("User"), widths[2], "text", self.CellDataFunc],
             [_("Speed"), widths[3], "number", self.CellDataFunc],
             [_("Files"), widths[4], "number", self.CellDataFunc],
@@ -149,7 +149,7 @@ class UserList:
                 last_seen = user[5]
                 try:
                     time_from_epoch = time.mktime(time.strptime(last_seen, "%m/%d/%Y %H:%M:%S"))
-                except:
+                except Exception:
                     if last_seen == '':
                         time_from_epoch = sys.maxint
                     else:
@@ -368,7 +368,7 @@ class UserList:
             self.usersmodel.set(user[3], 0, self.frame.GetStatusImage(0), 3, "0", 4, "0", 10, 0, 11, 0, 12, 0)
 
         for user in self.userlist:
-            if self.usersmodel.get(user[3], 8)[0] is "":
+            if self.usersmodel.get(user[3], 8)[0] == "":
                 self.SetLastSeen(user[0])
 
     def OnPopupMenu(self, widget, event):
@@ -389,7 +389,7 @@ class UserList:
             self.popup_menu.set_user(user)
 
             items = self.popup_menu.get_children()
-            me = (self.popup_menu.user == None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
+            me = (self.popup_menu.user is None or self.popup_menu.user == self.frame.np.config.sections["server"]["login"])
 
             self.Menu_BanUser.set_active(user in self.frame.np.config.sections["server"]["banlist"])
             self.Menu_IgnoreUser.set_active(user in self.frame.np.config.sections["server"]["ignorelist"])
@@ -428,7 +428,7 @@ class UserList:
 
         if msg.status:  # online
             self.SetLastSeen(msg.user, online=True)
-        elif self.usersmodel.get(iter, 8)[0] is "":  # disconnected
+        elif self.usersmodel.get(iter, 8)[0] == "":  # disconnected
             self.SetLastSeen(msg.user)
 
     def GetUserStats(self, msg):
@@ -526,6 +526,7 @@ class UserList:
             widths.append(column.get_width())
         self.frame.np.config.sections["columns"]["userlist"] = columns
         self.frame.np.config.sections["columns"]["userlist_widths"] = widths
+
     def RemoveFromList(self, user):
 
         if user in self.notify:
@@ -561,7 +562,7 @@ class UserList:
             if user in self.trusted:
                 self.trusted.remove(user)
         else:
-            if not user in self.trusted:
+            if user not in self.trusted:
                 self.trusted.append(user)
 
         for i in self.userlist:
@@ -578,7 +579,7 @@ class UserList:
             if user in self.notify:
                 self.notify.remove(user)
         else:
-            if not user in self.notify:
+            if user not in self.notify:
                 self.notify.append(user)
 
         for i in self.userlist:
@@ -595,7 +596,7 @@ class UserList:
             if user in self.privileged:
                 self.privileged.remove(user)
         else:
-            if not user in self.privileged:
+            if user not in self.privileged:
                 self.privileged.append(user)
 
         for i in self.userlist:

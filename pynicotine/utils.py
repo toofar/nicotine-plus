@@ -39,7 +39,7 @@ import gettext
 
 from logfacility import log as logfacility
 
-version = "1.4.1"
+version = "1.4.2"
 
 log = 0
 win32 = sys.platform.startswith("win")
@@ -81,6 +81,30 @@ def CleanPath(path, absolute=False):
         path = path.rstrip('.')
 
     return path
+
+
+def GetUserDirectories():
+    """Returns a tuple:
+    - the config directory
+    - the data directory"""
+    home = os.path.expanduser("~")
+
+    legacy_dir = os.path.join(home, '.nicotine')
+
+    if os.path.isdir(legacy_dir):
+        return legacy_dir, legacy_dir
+
+    def xdgPath(xdg, default):
+        path = os.environ.get(xdg)
+
+        path = path.split(':')[0] if path else default
+
+        return os.path.join(path, 'nicotine')
+
+    config_dir = xdgPath('XDG_CONFIG_HOME', os.path.join(home, '.config'))
+    data_dir = xdgPath('XDG_DATA_HOME', os.path.join(home, '.local', 'share'))
+
+    return config_dir, data_dir
 
 
 def ApplyTranslation():
@@ -216,7 +240,7 @@ class SortedDict(UserDict):
     # @param value dict value
     def __setitem__(self, key, value):
 
-        if not self.__dict__.has_key(key):
+        if key not in self.__dict__:
             self.__keys__.append(key)
             self.__sorted__ = False
 
@@ -288,7 +312,7 @@ def executeCommand(command, replacement=None, background=True, returnoutput=Fals
     if command.endswith("&"):
         command = command[:-1]
         if returnoutput:
-            print "Yikes, I was asked to return output but I'm also asked to launch the process in the background. returnoutput gets precedent."
+            print("Yikes, I was asked to return output but I'm also asked to launch the process in the background. returnoutput gets precedent.")
         else:
             background = True
 
@@ -342,7 +366,7 @@ def executeCommand(command, replacement=None, background=True, returnoutput=Fals
             procs.append(Popen(subcommands[-1], stdin=procs[-1].stdout, stdout=finalstdout))
         if not background and not returnoutput:
             procs[-1].wait()
-    except:
+    except Exception:
         raise RuntimeError("Problem while executing command %s (%s of %s)" % (subcommands[len(procs)], len(procs)+1, len(subcommands)))
 
     if not returnoutput:

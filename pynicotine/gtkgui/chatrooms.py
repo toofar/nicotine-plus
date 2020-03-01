@@ -173,13 +173,13 @@ class RoomsControl:
         try:
             private1 = model.get_value(iter1, 2) * 10000
             private1 += model.get_value(iter1, 1)
-        except:
+        except Exception:
             private1 = 0
 
         try:
             private2 = model.get_value(iter2, 2) * 10000
             private2 += model.get_value(iter2, 1)
-        except:
+        except Exception:
             private2 = 0
 
         return cmp(private1, private2)
@@ -333,8 +333,8 @@ class RoomsControl:
 
         try:
             angle = int(self.frame.np.config.sections["ui"]["labelrooms"])
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             pass
 
         self.ChatNotebook.append_page(room.Main, 'Public ', room.OnLeave, angle)
@@ -393,8 +393,8 @@ class RoomsControl:
         angle = 0
         try:
             angle = int(self.frame.np.config.sections["ui"]["labelrooms"])
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             pass
 
         self.ChatNotebook.append_page(tab.Main, msg.room, tab.OnLeave, angle)
@@ -1149,7 +1149,7 @@ class ChatRoom:
 
         try:
             roomlines = int(config["logging"]["readroomlines"])
-        except:
+        except Exception:
             roomlines = 15
 
         try:
@@ -1210,7 +1210,7 @@ class ChatRoom:
                 self.lines.append(AppendLine(self.ChatScroll, _("--- old messages above ---"), self.tag_hilite))
 
             gobject.idle_add(self.frame.ScrollBottom, self.ChatScroll.get_parent())
-        except IOError, e:
+        except IOError as e:
             pass
 
     def on_key_press_event(self, widget, event):
@@ -1812,8 +1812,8 @@ class ChatRoom:
                 cellrenderer.set_property("weight", pango.WEIGHT_NORMAL)
                 cellrenderer.set_property("underline", pango.UNDERLINE_NONE)
         else:
-                cellrenderer.set_property("weight", pango.WEIGHT_NORMAL)
-                cellrenderer.set_property("underline", pango.UNDERLINE_NONE)
+            cellrenderer.set_property("weight", pango.WEIGHT_NORMAL)
+            cellrenderer.set_property("underline", pango.UNDERLINE_NONE)
 
         self.frame.CellDataFunc(column, cellrenderer, model, iter)
 
@@ -2034,7 +2034,7 @@ class ChatRoom:
                 self.frame.np.queue.put(slskmessages.LeavePublicRoom())
                 self.roomsctrl.LeaveRoom(slskmessages.LeaveRoom(self.room))  # Faking protocol msg
             else:
-                print "Unknown meta chatroom closed."
+                print("Unknown meta chatroom closed.")
 
         self.frame.pluginhandler.LeaveChatroomNotification(self.room)
 
@@ -2146,7 +2146,7 @@ class ChatRoom:
         def _combilower(x):
             try:
                 return str.lower(x)
-            except:
+            except Exception:
                 return unicode.lower(x)
 
         clist = list(set(clist))

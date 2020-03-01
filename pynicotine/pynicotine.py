@@ -82,7 +82,7 @@ class Timeout:
     def timeout(self):
         try:
             self.callback([self])
-        except Exception, e:
+        except Exception as e:
             print("Exception in callback %s: %s" % (self.callback, e))
 
 
@@ -101,7 +101,7 @@ class NetworkEventProcessor:
     """ This class contains handlers for various messages from the networking
     thread"""
 
-    def __init__(self, frame, callback, writelog, setstatus, bindip, configfile):
+    def __init__(self, frame, callback, writelog, setstatus, bindip, port, data_dir, config):
 
         self.frame = frame
         self.callback = callback
@@ -109,17 +109,18 @@ class NetworkEventProcessor:
         self.setStatus = setstatus
 
         try:
-            self.config = Config(configfile)
+            self.config = Config(config, data_dir)
         except ConfigParserError:
-            corruptfile = ".".join([configfile, CleanFile(datetime.datetime.now().strftime("%Y-%M-%d_%H:%M:%S")), "corrupt"])
-            shutil.move(configfile, corruptfile)
+            corruptfile = ".".join([config, CleanFile(datetime.datetime.now().strftime("%Y-%M-%d_%H:%M:%S")), "corrupt"])
+            shutil.move(config, corruptfile)
             short = _("Your config file is corrupt")
             long = _("We're sorry, but it seems your configuration file is corrupt. Please reconfigure Nicotine+.\n\nWe renamed your old configuration file to\n%(corrupt)s\nIf you open this file with a text editor you might be able to rescue some of your settings.") % {'corrupt': corruptfile}
             log.addwarning(long)
-            self.config = Config(configfile)
+            self.config = Config(config, data_dir)
             self.callback([PopupMessage(short, long)])
 
         self.bindip = bindip
+        self.port = port
         self.config.frame = frame
         self.config.readConfig()
         self.peerconns = []
@@ -142,7 +143,7 @@ class NetworkEventProcessor:
             except ImportError:
                 self.geoip = None
 
-        self.protothread = slskproto.SlskProtoThread(self.frame.networkcallback, self.queue, self.bindip, self.config, self)
+        self.protothread = slskproto.SlskProtoThread(self.frame.networkcallback, self.queue, self.bindip, self.port, self.config, self)
 
         uselimit = self.config.sections["transfers"]["uselimit"]
         uploadlimit = self.config.sections["transfers"]["uploadlimit"]
@@ -431,7 +432,7 @@ class NetworkEventProcessor:
         string = self.decode(string, coding)
         try:
             return string.encode(locale.nl_langinfo(locale.CODESET))
-        except:
+        except Exception:
             return string
 
     def encode(self, str, networkenc=None):
@@ -1316,7 +1317,7 @@ class NetworkEventProcessor:
                     'port': msg.port,
                     'country': cc
                 }
-            except:
+            except Exception:
                 message = _("IP address of %(user)s is %(ip)s, port %(port)i%(country)s") % {
                  'user': msg.user,
                  'ip': msg.ip,
@@ -1446,7 +1447,7 @@ class NetworkEventProcessor:
                             'real_ip': u_ip
                         }
                         self.logMessage(warning, 1)
-                        print warning
+                        print(warning)
                         return 1
         return 0
 
@@ -1542,7 +1543,7 @@ class NetworkEventProcessor:
             f = open(userpic, 'rb')
             pic = f.read()
             f.close()
-        except:
+        except Exception:
             pic = None
 
         descr = self.encode(eval(self.config.sections["userinfo"]["descr"], {})).replace("\n", "\r\n")
@@ -1970,7 +1971,7 @@ class NetworkEventProcessor:
                 f.write(time.strftime("%c"))
                 f.write(" %s\n" % message)
                 f.close()
-            except IOError, error:
+            except IOError as error:
                 self.logMessage(_("Couldn't write to transfer log: %s") % error)
 
         if toUI:

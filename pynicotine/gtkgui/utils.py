@@ -82,6 +82,7 @@ def popupWarning(parent, title, warning, icon=None):
 
     return 0
 
+
 # we could move this into a new class
 previouscountrypath = None
 
@@ -144,14 +145,14 @@ def showCountryTooltip(widget, x, y, tooltip, sourcecolumn, stripprefix='flag_')
 def recode(s):
     try:
         return s.decode(locale.nl_langinfo(locale.CODESET), "replace").encode("utf-8", "replace")
-    except:
+    except Exception:
         return s
 
 
 def recode2(s):
     try:
         return s.decode("utf-8", "replace").encode(locale.nl_langinfo(locale.CODESET), "replace")
-    except:
+    except Exception:
         return s
 
 
@@ -296,7 +297,7 @@ def OpenUri(uri):
         import gnomevfs
         gnomevfs.url_show(uri)
         return
-    except Exception, e:
+    except Exception as e:
         pass
 
 
@@ -325,10 +326,10 @@ def AppendLine(textview, line, tag=None, timestamp=None, showstamp=True, timesta
 
     def _usertag(buffer, section):
         # Tag usernames with popup menu creating tag, and away/online/offline colors
-        if USERNAMEHOTSPOTS and username != None and usertag != None:
+        if USERNAMEHOTSPOTS and username is not None and usertag is not None:
             np = re.compile(re.escape(username))
             match = np.search(section)
-            if match != None:
+            if match is not None:
                 start2 = section[:match.start()]
                 name = match.group()[:]
                 start = section[match.end():]
@@ -549,7 +550,7 @@ class ImageLabel(gtk.HBox):
 
             try:
                 gtk.gdk.color_parse(color)
-            except:
+            except Exception:
                 color = ""
         else:
             color = ""
@@ -631,7 +632,7 @@ class IconNotebook:
             page, label_tab, status, label_tab_menu = data
             try:
                 self.Notebook.set_tab_reorderable(page, self.reorderable)
-            except:
+            except Exception:
                 pass
 
     def set_tab_closers(self, closers):
@@ -1167,8 +1168,8 @@ class PopupMenu(gtk.Menu):
             try:
                 days = int(text)
                 self.frame.GivePrivileges(self.user, days)
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
 
     def OnPrivateRooms(self, widget):
 
@@ -1234,11 +1235,11 @@ def InputDialog(parent, title, message, default=""):
 def int_sort_func(model, iter1, iter2, column):
     try:
         val1 = int(model.get_value(iter1, column))
-    except:
+    except Exception:
         val1 = 0
     try:
         val2 = int(model.get_value(iter2, column))
-    except:
+    except Exception:
         val2 = 0
     return cmp(val1, val2)
 
@@ -1247,12 +1248,12 @@ def float_sort_func(model, iter1, iter2, column):
 
     try:
         val1 = float(model.get_value(iter1, column))
-    except:
+    except Exception:
         val1 = 0.0
 
     try:
         val2 = float(model.get_value(iter2, column))
-    except:
+    except Exception:
         val2 = 0.0
 
     return cmp(val1, val2)
@@ -1260,7 +1261,7 @@ def float_sort_func(model, iter1, iter2, column):
 
 def WriteLog(logsdir, fn, msg):
 
-    oldumask = os.umask(0077)
+    oldumask = os.umask(0o077)
     if not os.path.exists(logsdir):
         os.makedirs(logsdir)
 
@@ -1282,7 +1283,7 @@ def fixpath(path):
             for char in chars:
                 path = path.replace(char, "_")
         return path
-    except:
+    except Exception:
         return path
 
 
@@ -1446,8 +1447,8 @@ def _expand_alias(aliases, cmd):
                 ret = ret + alias[i]
                 i = i + 1
         return ret
-    except Exception, error:
-        print error
+    except Exception as error:
+        print(error)
         pass
     return ""
 

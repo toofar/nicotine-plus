@@ -404,8 +404,8 @@ class MetaDialog(gtk.Dialog):
 
         try:
             label.set_property("xalign", xalign)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             pass
 
         return label
@@ -426,7 +426,7 @@ class MetaDialog(gtk.Dialog):
 
         try:
             entry.set_property("xalign", xalign)
-        except:
+        except Exception:
             pass
 
         entry.show()

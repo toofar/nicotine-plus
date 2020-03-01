@@ -30,7 +30,7 @@ import os
 import platform
 import sys
 from pynicotine.logfacility import log
-from pynicotine.utils import ApplyTranslation
+from pynicotine.utils import ApplyTranslation, GetUserDirectories
 
 # Setting gettext and locale
 ApplyTranslation()
@@ -81,7 +81,7 @@ You should install PyGTK 2.24.X.""") % (e)
     # Require pynicotine
     try:
         import pynicotine
-    except ImportError, e:
+    except ImportError as e:
         return _("""Can not find Nicotine+ modules.
 Perhaps they're installed in a directory which is not
 in an interpreter's module search path.
@@ -109,7 +109,7 @@ Python bindings: http://www.maxmind.com/app/python
         # dbhash might be a good choice
         try:
             import dbhash
-        except:
+        except Exception:
             log.addwarning(
                 _("Warning: the Berkeley DB module, dbhash, " +
                   "could not be loaded."))
@@ -117,7 +117,7 @@ Python bindings: http://www.maxmind.com/app/python
         # win32file is used to handle hidden files
         try:
             import win32file
-        except:
+        except Exception:
             msg = _("""Nicotine+ supports hidden files attributes on windows.
 This requires a python module called pypiwin32. You can find it here:
 https://pypi.python.org/pypi/pypiwin32""")
@@ -130,7 +130,7 @@ def version():
     try:
         import pynicotine.utils
         print _("Nicotine+ version %s" % pynicotine.utils.version)
-    except ImportError, error:
+    except ImportError as error:
         print _("Cannot find the pynicotine.utils module.")
 
 
@@ -144,6 +144,7 @@ Usage: nicotine [OPTION]...
   -h,      --help             Show help and exit
   -s,      --hidden           Start the program hidden so only the tray icon is shown
   -b ip,   --bindip=ip        Bind sockets to the given IP (useful for VPN)
+  -l port, --port=port        Listen on the given port. Overrides the portrange configuration
   -v,      --version          Display version and exit""")
 
 
@@ -155,7 +156,7 @@ def renameprocess(newname, debug=False):
     try:
         import procname
         procname.setprocname(newname)
-    except:
+    except Exception:
         errors.append("Failed procname module")
 
     # Renaming ourselves for pkill et al.
@@ -164,7 +165,7 @@ def renameprocess(newname, debug=False):
         # GNU/Linux style
         libc = ctypes.CDLL('libc.so.6')
         libc.prctl(15, newname, 0, 0, 0)
-    except:
+    except Exception:
         errors.append("Failed GNU/Linux style")
 
     try:
@@ -172,7 +173,7 @@ def renameprocess(newname, debug=False):
         # FreeBSD style
         libc = dl.open('/lib/libc.so.6')
         libc.call('setproctitle', newname + '\0')
-    except:
+    except Exception:
         errors.append("Failed FreeBSD style")
 
     if debug and errors:
@@ -200,7 +201,8 @@ def run():
                                     "disable-trayicon",
                                     "version",
                                     "hidden",
-                                    "bindip="
+                                    "bindip=",
+                                    "port="
                                    ]
                                    )
     except getopt.GetoptError:
@@ -210,19 +212,22 @@ def run():
 
     if win32:
         try:
-            mydir = os.path.join(os.environ['APPDATA'], 'nicotine')
+            data_dir = os.path.join(os.environ['APPDATA'], 'nicotine')
         except KeyError:
-            mydir, x = os.path.split(sys.argv[0])
-        config = os.path.join(mydir, "config", "config")
-        plugins = os.path.join(mydir, "plugins")
+            data_dir, x = os.path.split(sys.argv[0])
+
+        config = os.path.join(data_dir, "config", "config")
     else:
-        config = os.path.join(os.path.expanduser("~"), '.nicotine', 'config')
-        plugins = os.path.join(os.path.expanduser("~"), '.nicotine', 'plugins')
+        config_dir, data_dir = GetUserDirectories()
+        config = os.path.join(config_dir, 'config')
+
+    plugins = os.path.join(data_dir, 'plugins')
 
     profile = 0
     trayicon = 1
     hidden = False
     bindip = None
+    port = None
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -234,6 +239,8 @@ def run():
             plugins = a
         if o in ("-b", "--bindip"):
             bindip = a
+        if o in ("-l", "--port"):
+            port = a
         if o == "--profile":
             profile = 1
         if o in ("-t", "--enable-trayicon"):
@@ -251,7 +258,7 @@ def run():
     if result is None:
         from pynicotine.gtkgui import frame
 
-        app = frame.MainApp(config, plugins, trayicon, hidden, bindip)
+        app = frame.MainApp(data_dir, config, plugins, trayicon, hidden, bindip, port)
 
         if profile:
 
@@ -271,6 +278,7 @@ def run():
             app.MainLoop()
     else:
         print result
+
 
 if __name__ == '__main__':
     try:

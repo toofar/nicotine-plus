@@ -40,7 +40,8 @@ from pynicotine.utils import displayTraceback, executeCommand, CleanFile
 
 class UserBrowse:
 
-    def __init__(self, userbrowses, user, conn):
+    def __init__(self, userbrowses, user, conn, data_dir):
+        self.data_dir = data_dir
 
         # Build the window
         builder = gtk.Builder()
@@ -404,7 +405,7 @@ class UserBrowse:
                 if filedata[2] < 18446744000000000000:
                     self.totalsize += filedata[2]
                 else:
-                    print "Unbelievable filesize: %s, %s" % (HumanSize(filedata[2]), repr(filedata))
+                    print("Unbelievable filesize: %s, %s" % (HumanSize(filedata[2]), repr(filedata)))
 
         self.AmountShared.set_text(_("Shared: %s") % HumanSize(self.totalsize))
         self.NumDirectories.set_text(_("Dirs: %s") % len(self.shares))
@@ -570,18 +571,16 @@ class UserBrowse:
 
             try:
                 self.files[f[0]] = self.FileStore.append(f)
-            except Exception, error:
+            except Exception as error:
                 displayTraceback()
 
     def OnSave(self, widget):
-
-        configdir, config = os.path.split(self.frame.np.config.filename)
-        sharesdir = os.path.abspath(configdir + os.sep + "usershares" + os.sep)
+        sharesdir = os.path.join(self.data_dir, "usershares")
 
         try:
             if not os.path.exists(sharesdir):
                 os.mkdir(sharesdir)
-        except Exception, msg:
+        except Exception as msg:
             error = _("Can't create directory '%(folder)s', reported error: %(error)s" % {'folder': sharesdir, 'error': msg})
             self.frame.logMessage(error)
 
@@ -591,7 +590,7 @@ class UserBrowse:
             sharesfile = bz2.BZ2File(os.path.join(sharesdir, CleanFile(self.user)), 'w')
             mypickle.dump(self.shares, sharesfile, mypickle.HIGHEST_PROTOCOL)
             sharesfile.close()
-        except Exception, msg:
+        except Exception as msg:
             error = _("Can't save shares, '%(user)s', reported error: %(error)s" % {'user': self.user, 'error': msg})
             self.frame.logMessage(error)
 

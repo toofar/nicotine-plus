@@ -49,13 +49,13 @@ def detect(path):
         audio = mutagen.File(path)
     except IOError:
         return None
-    except Exception, e:
+    except Exception as e:
         log.addwarning("Mutagen crashed on '%s': %s" % (path, e))
         return None
 
     try:
         audio.info
-    except:
+    except Exception:
         # mutagen didn't think the file was audio
         return None
 
@@ -76,7 +76,7 @@ def detect(path):
     elif type(audio.info) == OggOpusInfo:
         return processOpus(audio)
     else:
-        print "EEK, what should I do with %(type)s (%(file)s)?" % {"type": str(type(audio.info)), "file": path}
+        print("EEK, what should I do with %(type)s (%(file)s)?" % {"type": str(type(audio.info)), "file": path})
 
     return processGeneric(audio)
 
@@ -190,6 +190,7 @@ def processASF(audio):
         "vbr": True,
         "time": duration,
     }
+
 
 def processOpus(audio):
 

@@ -1055,7 +1055,8 @@ class Shares:
         sharedstreams = config["transfers"]["sharedfilesstreams"]
         wordindex = config["transfers"]["wordindex"]
         fileindex = config["transfers"]["fileindex"]
-        shareddirs = config["transfers"]["shared"] + [config["transfers"]["downloaddir"]]
+        shareddirs = [path for _name, path in config["transfers"]["shared"]]
+        sharedmtimes.append(config["transfers"]["downloaddir"])
         sharedmtimes = config["transfers"]["sharedmtimes"]
 
         dir = str(os.path.expanduser(os.path.dirname(name)))
